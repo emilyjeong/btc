@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="BTC" />
+  <meta name="theme-color" content="#0a0a09" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="supported-color-schemes" content="dark" />
+  <title>BTC — DCA 대시보드</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ─── 다크모드 강제 ─── */
+    :root { color-scheme: dark; accent-color: #f07a40; }
+    html { color-scheme: dark; background: #0a0a09; }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --bg: #0a0a09; --surface: #0f0f0e; --card: #161513; --card-hi: #1c1b19;
+      --border: #2a2926; --border-mid: #353330;
+      --ink: #f0ede8; --ink-mid: #9a9690; --ink-dim: #565250;
+      --pos: #00c98a; --neg: #f04d62; --accent: #e8b800; --info: #5aabf0; --purple: #b8a8f0;
+      --cat-btc: #f07a40;
+      --cat-btc-dim: rgba(240, 122, 64, 0.12);
+      --cat-btc-bd:  rgba(240, 122, 64, 0.32);
+      --radius: 14px; --radius-sm: 8px; --radius-xs: 6px;
+      --pad: 16px; --gap: 10px; --max-width: 480px;
+      --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    html, body { height: 100%; background: var(--bg) !important; }
+    body {
+      color: var(--ink); font-family: var(--font-sans);
+      font-size: 13px; line-height: 1.5; min-height: 100%;
+      padding: calc(var(--safe-top) + 16px) 16px calc(var(--safe-bottom) + 32px);
+      max-width: var(--max-width); margin: 0 auto;
+      overscroll-behavior: none; letter-spacing: -0.01em;
+      color-scheme: dark;
+    }
+
+    /* ─── input 다크모드 ─── */
+    input, textarea, select, button { color-scheme: dark; font-family: inherit; }
+    input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus {
+      -webkit-text-fill-color: var(--ink) !important;
+      -webkit-box-shadow: 0 0 0 1000px var(--surface) inset !important;
+      caret-color: var(--ink) !important;
+      transition: background-color 5000s ease-in-out 0s;
+    }
+    ::selection { background: var(--cat-btc-dim); color: var(--ink); }
+    ::-webkit-scrollbar { width: 0; height: 0; }
+
+    .pos { color: var(--pos); }
+    .neg { color: var(--neg); }
+
+    /* ─── BTC 로딩 펄스 (가격/평가금액) ─── */
+    @keyframes btcPulse {
+      0%, 100% { opacity: 0.45; transform: scale(0.96); }
+      50%      { opacity: 1;    transform: scale(1.04); }
+    }
+    .btc-loading {
+      display: inline-flex; align-items: baseline; gap: 4px;
+      color: var(--cat-btc) !important;
+    }
+    .btc-loading::before {
+      content: '₿';
+      display: inline-block;
+      animation: btcPulse 1.2s ease-in-out infinite;
+      transform-origin: center;
+    }
+    .btc-loading-text {
+      animation: btcPulse 1.2s ease-in-out infinite;
+      font-size: 0.85em;
+      color: var(--ink-dim);
+    }
+
+    /* ─── HEADER ─── */
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; margin-bottom: 14px;
+    }
+    .header-title {
+      font-family: var(--font-sans); font-size: 22px; font-weight: 700;
+      color: var(--ink); letter-spacing: -0.02em; flex: 1; min-width: 0;
+    }
+
+    .header-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+    /* ─── 홈 버튼 (family_portfolio와 통일) ─── */
+    .home-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 38px; height: 38px; flex-shrink: 0;
+      background-color: var(--card-hi);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 17px;
+      text-decoration: none;
+      transition: border-color .12s, background-color .12s, transform .08s;
+    }
+    .home-btn:hover  { border-color: var(--border-mid); }
+    .home-btn:active { background-color: var(--border); transform: scale(0.95); }
+
+    .icon-btn {
+      width: 38px; height: 38px; flex-shrink: 0;
+      background: var(--card-hi); border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      display: inline-flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--ink-mid); font-size: 16px;
+      transition: border-color .12s, background-color .12s, transform .08s;
+    }
+    .icon-btn:active { background-color: var(--border); transform: scale(0.95); color: var(--ink); }
+
+    /* ─── PRICE CHIP ─── */
+    .price-chip {
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 10px 12px; display: flex; align-items: center; justify-content: space-between;
+      gap: 8px; margin-bottom: var(--gap);
+    }
+    .price-chip-l { display: flex; flex-direction: column; gap: 2px; }
+    .price-chip-lbl {
+      font-family: var(--font-sans); font-size: 10px; color: var(--ink-dim);
+      text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;
+    }
+    .price-chip-val {
+      font-family: var(--font-mono); font-size: 14px; font-weight: 700; color: var(--ink);
+    }
+    .price-chip-delta { font-family: var(--font-mono); font-size: 11px; font-weight: 600; }
+
+    /* ─── HERO PROGRESS ─── */
+    .hero-progress {
+      background: var(--card-hi); border: 1px solid var(--border-mid);
+      border-radius: var(--radius); padding: 18px var(--pad);
+      position: relative; overflow: hidden; margin-bottom: var(--gap);
+    }
+    .hero-progress::after {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--cat-btc), var(--accent), var(--pos));
+    }
+    .hero-progress-head {
+      display: flex; justify-content: space-between; align-items: flex-end;
+      margin-bottom: 14px;
+    }
+    .hero-progress-lbl {
+      font-family: var(--font-sans); font-size: 11px; font-weight: 600;
+      color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+    .hero-progress-pct {
+      font-family: var(--font-mono); font-size: 32px; font-weight: 700;
+      color: var(--accent); line-height: 1; letter-spacing: -0.02em;
+    }
+    .hero-progress-target { text-align: right; cursor: pointer; padding: 4px; margin: -4px; border-radius: var(--radius-xs); }
+    .hero-progress-target:active { background: rgba(255,255,255,0.04); }
+    .hero-progress-target-val {
+      font-family: var(--font-mono); font-size: 15px; font-weight: 700; color: var(--accent);
+    }
+    .hero-progress-target-sub {
+      font-family: var(--font-sans); font-size: 10px; color: var(--ink-dim);
+      margin-top: 3px; font-weight: 500;
+    }
+    .bar-track {
+      background: rgba(255, 255, 255, 0.04); border-radius: 99px;
+      height: 10px; overflow: hidden; margin-bottom: 8px;
+    }
+    .bar-fill {
+      height: 100%; border-radius: 99px;
+      background: linear-gradient(90deg, var(--cat-btc), #ffb070);
+      transition: width 0.6s cubic-bezier(.4, 0, .2, 1);
+    }
+    .bar-labels {
+      display: flex; justify-content: space-between;
+      font-family: var(--font-mono); font-size: 10px; color: var(--ink-dim);
+    }
+
+    /* ─── CARDS ─── */
+    .section-lbl {
+      font-family: var(--font-sans); font-size: 10px; color: var(--ink-dim);
+      text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;
+      margin: 14px 0 8px 4px;
+    }
+    .cards-2col {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: var(--gap); margin-bottom: var(--gap);
+    }
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: var(--pad);
+      position: relative; overflow: hidden;
+    }
+    .card.clickable { cursor: pointer; transition: background 0.15s; }
+    .card.clickable:active { background: var(--card-hi); }
+    .card::after {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    }
+    .card.c-btc::after    { background: var(--cat-btc); }
+    .card.c-pos::after    { background: var(--pos); }
+    .card.c-info::after   { background: var(--info); }
+    .card.c-accent::after { background: var(--accent); }
+    .card.c-purple::after { background: var(--purple); }
+    .card-label {
+      font-family: var(--font-sans); font-size: 11px; font-weight: 600;
+      color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.06em;
+      margin-bottom: 10px; display: flex; align-items: center; gap: 5px;
+    }
+    .card-val {
+      font-family: var(--font-mono); font-size: 18px; font-weight: 700;
+      line-height: 1.2; color: var(--ink); word-break: break-all;
+    }
+    .card-sub {
+      font-family: var(--font-mono); font-size: 11px; color: var(--ink-dim);
+      margin-top: 6px; font-weight: 500;
+    }
+    .edit-hint {
+      font-family: var(--font-sans); font-size: 10px; color: var(--cat-btc);
+      opacity: 0.7; margin-top: 5px; font-weight: 500;
+    }
+
+    /* ─── CHART ─── */
+    .chart-wrap {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: var(--pad); margin-bottom: var(--gap);
+    }
+    .chart-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 14px;
+    }
+    .chart-title { font-family: var(--font-sans); font-size: 14px; font-weight: 700; color: var(--ink); }
+    .legend { display: flex; gap: 12px; }
+    .legend-item {
+      font-family: var(--font-mono); font-size: 10px; color: var(--ink-mid);
+      display: flex; align-items: center; gap: 5px;
+    }
+    .dot { width: 7px; height: 7px; border-radius: 50%; }
+    .chart-area { height: 180px; position: relative; }
+    canvas { width: 100% !important; height: 100% !important; }
+    .no-data-msg {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 6px;
+      font-family: var(--font-sans); font-size: 12px; color: var(--ink-dim);
+      text-align: center; line-height: 1.7;
+    }
+    .no-data-msg .ico { font-size: 22px; opacity: 0.5; }
+
+    /* ─── SNAPSHOT BUTTON ─── */
+    .snapshot-btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 16px;
+      background: var(--cat-btc-dim); border: 1px solid var(--cat-btc-bd);
+      border-radius: var(--radius);
+      color: var(--cat-btc); font-family: var(--font-sans);
+      font-size: 14px; font-weight: 700;
+      cursor: pointer; transition: transform 0.1s, background 0.2s;
+      margin-bottom: var(--gap);
+    }
+    .snapshot-btn:active { transform: scale(0.98); }
+    .snapshot-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .snapshot-btn .ico { font-size: 18px; }
+
+    /* ─── SNAPSHOTS LIST ─── */
+    .snap-list-wrap {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden; margin-bottom: var(--gap);
+    }
+    .snap-list-header {
+      padding: 14px 16px; border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .snap-list-title { font-family: var(--font-sans); font-size: 14px; font-weight: 700; color: var(--ink); }
+    .snap-list-count { font-family: var(--font-mono); font-size: 11px; color: var(--ink-dim); }
+    .snap-item {
+      padding: 12px 16px; border-top: 1px solid rgba(255, 255, 255, 0.03);
+      display: flex; align-items: center; gap: 12px;
+    }
+    .snap-item:first-of-type { border-top: none; }
+    .snap-item-body { flex: 1; min-width: 0; }
+    .snap-item-date {
+      font-family: var(--font-mono); font-size: 11px; color: var(--cat-btc);
+      font-weight: 600; margin-bottom: 4px;
+    }
+    .snap-item-stats {
+      font-family: var(--font-mono); font-size: 12px; color: var(--ink-mid);
+      line-height: 1.6; font-weight: 500;
+    }
+    .snap-item-stats b { color: var(--ink); font-weight: 700; }
+    .snap-item-stats .sep { color: var(--ink-dim); margin: 0 6px; }
+    .snap-item-memo {
+      font-family: var(--font-sans); font-size: 11px; color: var(--ink-mid);
+      margin-top: 5px; padding: 6px 8px;
+      background: var(--surface); border-radius: var(--radius-xs);
+      border-left: 2px solid var(--border-mid); line-height: 1.5;
+    }
+    .del-btn {
+      background: none; border: none; color: var(--neg);
+      font-size: 20px; opacity: 0.4; cursor: pointer; padding: 0 4px;
+      line-height: 1; flex-shrink: 0;
+    }
+    .del-btn:active { opacity: 1; }
+    .empty-state {
+      padding: 40px 20px; text-align: center;
+      color: var(--ink-dim); font-family: var(--font-sans);
+      font-size: 12px; line-height: 1.9;
+    }
+    .empty-state .ico { display: block; font-size: 24px; margin-bottom: 6px; opacity: 0.5; }
+
+    /* ─── MODAL ─── */
+    .overlay {
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7);
+      z-index: 200; display: none; align-items: flex-end;
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    }
+    .overlay.open { display: flex; }
+    .modal {
+      background: var(--card); border-radius: 20px 20px 0 0;
+      border: 1px solid var(--border); border-bottom: none;
+      padding: 12px 20px calc(var(--safe-bottom) + 28px);
+      width: 100%; max-width: var(--max-width); margin: 0 auto;
+      max-height: 90vh; overflow-y: auto;
+    }
+    .modal-handle {
+      width: 36px; height: 4px; background: var(--border-mid);
+      border-radius: 99px; margin: 0 auto 20px;
+    }
+    .modal-title {
+      font-family: var(--font-sans); font-size: 17px; font-weight: 700;
+      color: var(--ink); margin-bottom: 5px; letter-spacing: -0.02em;
+    }
+    .modal-sub {
+      font-family: var(--font-sans); font-size: 12px; color: var(--ink-mid);
+      margin-bottom: 22px; line-height: 1.6;
+    }
+    .field { margin-bottom: 16px; }
+    .field label {
+      display: block; font-family: var(--font-sans); font-size: 11px;
+      color: var(--ink-dim); font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 7px;
+    }
+    .field input, .field textarea {
+      width: 100%; background: var(--surface);
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 12px 13px; color: var(--ink);
+      font-size: 15px; font-family: var(--font-mono); font-weight: 500;
+      outline: none; -webkit-appearance: none; transition: border 0.15s;
+    }
+    .field textarea {
+      font-family: var(--font-sans); font-size: 13px;
+      resize: vertical; min-height: 60px; line-height: 1.5;
+    }
+    .field input:focus, .field textarea:focus { border-color: var(--cat-btc); }
+    .field-hint {
+      font-family: var(--font-sans); font-size: 10px; color: var(--ink-dim);
+      margin-top: 6px; line-height: 1.5;
+    }
+    .modal-btns {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: var(--gap); margin-top: 8px;
+    }
+    .btn {
+      padding: 14px 16px; border-radius: var(--radius-sm);
+      border: 1px solid transparent; cursor: pointer;
+      font-family: var(--font-sans); font-size: 13px; font-weight: 700;
+      letter-spacing: -0.01em; transition: transform 0.1s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: var(--cat-btc-dim); border-color: var(--cat-btc-bd); color: var(--cat-btc); }
+    .btn-cancel { background: var(--card-hi); border-color: var(--border); color: var(--ink-mid); }
+
+    /* ─── DATA MENU ─── */
+    .menu-list {
+      background: var(--surface); border-radius: var(--radius-sm);
+      border: 1px solid var(--border); overflow: hidden; margin-bottom: 14px;
+    }
+    .menu-item {
+      padding: 13px 14px; border-top: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+      cursor: pointer; font-family: var(--font-sans);
+      font-size: 13px; color: var(--ink); font-weight: 500;
+    }
+    .menu-item:first-child { border-top: none; }
+    .menu-item:active { background: var(--card-hi); }
+    .menu-item .ico { font-size: 16px; flex-shrink: 0; width: 18px; text-align: center; }
+    .menu-item .menu-meta {
+      margin-left: auto; font-family: var(--font-mono);
+      font-size: 10px; color: var(--ink-dim); font-weight: 500;
+    }
+    .menu-item .menu-meta.pos { color: var(--pos); }
+    .menu-item.danger { color: var(--neg); }
+
+    /* ─── TOAST ─── */
+    .toast {
+      position: fixed; bottom: calc(var(--safe-bottom) + 24px); left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--card-hi); border: 1px solid var(--border-mid);
+      color: var(--ink); padding: 10px 16px; border-radius: var(--radius-sm);
+      font-family: var(--font-sans); font-size: 13px; font-weight: 500;
+      opacity: 0; pointer-events: none; transition: all 0.2s;
+      z-index: 1000; white-space: nowrap;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.pos { border-color: rgba(0, 201, 138, 0.4); }
+    .toast.neg { border-color: rgba(240, 77, 98, 0.4); }
+
+    .refreshed-at {
+      text-align: center; font-family: var(--font-mono); font-size: 10px;
+      color: var(--ink-dim); margin-top: 16px; letter-spacing: 0.04em;
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-title">BTC 모으기</div>
+  <div class="header-actions">
+    <a href="https://emilyjeong.github.io/home" class="home-btn" aria-label="홈으로 가기">🏠</a>
+  </div>
+</div>
+
+<!-- PRICE -->
+<div class="price-chip">
+  <div class="price-chip-l">
+    <span class="price-chip-lbl">BTC / KRW</span>
+    <span class="price-chip-val btc-loading" id="priceVal"><span class="btc-loading-text">불러오는 중</span></span>
+  </div>
+  <span class="price-chip-delta" id="priceDelta"></span>
+</div>
+
+<!-- HERO PROGRESS -->
+<div class="hero-progress">
+  <div class="hero-progress-head">
+    <div>
+      <div class="hero-progress-lbl">🚀 목표 진행률</div>
+      <div class="hero-progress-pct" id="progressPct">0.00%</div>
+    </div>
+    <div class="hero-progress-target" onclick="openTargetModal()">
+      <div class="hero-progress-target-val" id="targetDisplay">1.0 BTC</div>
+      <div class="hero-progress-target-sub">탭해서 수정 ✎</div>
+    </div>
+  </div>
+  <div class="bar-track">
+    <div class="bar-fill" id="barFill" style="width: 0%"></div>
+  </div>
+  <div class="bar-labels">
+    <span id="barCurrent">현재 0 BTC</span>
+    <span id="barTarget">목표 1 BTC</span>
+  </div>
+</div>
+
+<!-- CARDS -->
+<div class="section-lbl">현황</div>
+<div class="cards-2col">
+  <div class="card c-purple clickable" onclick="openHoldingsModal()">
+    <div class="card-label">₿ 보유량</div>
+    <div class="card-val" id="totalBTC">0.00000000</div>
+    <div class="edit-hint">탭해서 수정 ✎</div>
+  </div>
+  <div class="card c-pos">
+    <div class="card-label">💰 평가금액</div>
+    <div class="card-val btc-loading" id="currentValue"><span class="btc-loading-text">계산중</span></div>
+    <div class="card-sub" id="currentPriceSub">기준가 —</div>
+  </div>
+</div>
+
+<div class="cards-2col">
+  <div class="card c-info">
+    <div class="card-label">⏳ 남은 수량</div>
+    <div class="card-val" id="remainingBTC">—</div>
+    <div class="card-sub" id="remainingSub">목표까지</div>
+  </div>
+  <div class="card c-accent">
+    <div class="card-label">💸 남은 금액</div>
+    <div class="card-val" id="remainingKRW">—</div>
+    <div class="card-sub">현재가 기준</div>
+  </div>
+</div>
+
+<!-- CHART -->
+<div class="section-lbl">누적 추이 (스냅샷)</div>
+<div class="chart-wrap">
+  <div class="chart-header">
+    <div class="chart-title">보유량 & 평가액</div>
+    <div class="legend">
+      <div class="legend-item"><span class="dot" style="background: var(--cat-btc)"></span>BTC</div>
+      <div class="legend-item"><span class="dot" style="background: var(--pos)"></span>평가액</div>
+    </div>
+  </div>
+  <div class="chart-area">
+    <canvas id="myChart" style="display: none"></canvas>
+    <div class="no-data-msg" id="noDataMsg">
+      <span class="ico">📸</span>
+      <div>아래 버튼으로 첫 스냅샷을<br>찍으면 추이가 표시돼요</div>
+    </div>
+  </div>
+</div>
+
+<!-- SNAPSHOT BUTTON -->
+<button class="snapshot-btn" id="snapshotBtn" onclick="openSnapshotModal()">
+  <span class="ico">📸</span>
+  <span id="snapBtnText">스냅샷 찍기</span>
+</button>
+
+<!-- SNAPSHOTS LIST -->
+<div class="snap-list-wrap">
+  <div class="snap-list-header">
+    <div class="snap-list-title">스냅샷 내역</div>
+    <div class="snap-list-count" id="snapCount"></div>
+  </div>
+  <div id="snapList">
+    <div class="empty-state">
+      <span class="ico">📭</span>
+      아직 스냅샷이 없어요<br>
+      <span style="opacity:.7">📸 버튼을 눌러 첫 기록을 남겨보세요</span>
+    </div>
+  </div>
+</div>
+
+<div class="refreshed-at" id="refreshedAt"></div>
+
+<!-- ─── HOLDINGS MODAL ─── -->
+<div class="overlay" id="holdingsModal" onclick="if(event.target===this)closeHoldingsModal()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">보유량 수정</div>
+    <div class="modal-sub">지갑/거래소의 현재 BTC 수량을 입력하세요.</div>
+    <div class="field">
+      <label>총 BTC 보유량</label>
+      <input type="number" id="holdingsInput" placeholder="예: 0.15234567" step="0.00000001" inputmode="decimal" />
+      <div class="field-hint">사토시 단위까지 OK (소수점 8자리)</div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-cancel" onclick="closeHoldingsModal()">취소</button>
+      <button class="btn btn-primary" onclick="saveHoldings()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── TARGET MODAL ─── -->
+<div class="overlay" id="targetModal" onclick="if(event.target===this)closeTargetModal()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">목표 BTC 설정</div>
+    <div class="modal-sub">모으고 싶은 BTC 목표 수량을 입력하세요.</div>
+    <div class="field">
+      <label>목표 수량 (BTC)</label>
+      <input type="number" id="targetInput" placeholder="예: 1.0" step="0.1" min="0.01" inputmode="decimal" />
+      <div class="field-hint">진행률 바와 남은 수량이 자동으로 갱신돼요</div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-cancel" onclick="closeTargetModal()">취소</button>
+      <button class="btn btn-primary" onclick="saveTarget()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── SNAPSHOT MODAL ─── -->
+<div class="overlay" id="snapshotModal" onclick="if(event.target===this)closeSnapshotModal()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📸 스냅샷 찍기</div>
+    <div class="modal-sub">현재 보유량 · BTC 가격 · 평가금액을 시점 기록으로 남겨요.</div>
+
+    <div class="field">
+      <label>현재 보유량</label>
+      <input type="text" id="snapHoldingsView" readonly />
+    </div>
+    <div class="field">
+      <label>현재 BTC 가격</label>
+      <input type="text" id="snapPriceView" readonly />
+    </div>
+    <div class="field">
+      <label>예상 평가금액</label>
+      <input type="text" id="snapValuationView" readonly />
+    </div>
+    <div class="field">
+      <label>메모 (선택)</label>
+      <textarea id="snapMemoInput" placeholder="시장 상황, 매수 근거, 관찰 포인트…"></textarea>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-cancel" onclick="closeSnapshotModal()">취소</button>
+      <button class="btn btn-primary" onclick="confirmSnapshot()">📸 기록</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script src="./config.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+/* ════════════════════════════════════════════════════════
+   SETUP — config.js 에서 SHEETS_URL 로드
+   ════════════════════════════════════════════════════════ */
+const SHEETS_URL = (window.CONFIG && window.CONFIG.SHEETS_URL) || '';
+const SHEETS_OK = !!SHEETS_URL;
+
+/* ════════════════════════════════════════════════════════
+   STATE
+   ════════════════════════════════════════════════════════ */
+const LS = {
+  holdings:  'btc_v3_holdings',
+  target:    'btc_v3_target',
+  snapshots: 'btc_v3_snapshots',
+};
+
+const S = {
+  price: null,
+  priceChange24h: null,
+  btcHoldings: 0,
+  targetBTC: 1.0,
+  snapshots: [],
+  syncStatus: 'offline',
+};
+
+let chartInst = null;
+let pushTimer = null;
+
+const saveLS = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const loadLS = (k) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } };
+
+function initState() {
+  const h = loadLS(LS.holdings); if (h !== null) S.btcHoldings = parseFloat(h);
+  const t = loadLS(LS.target); if (t !== null) S.targetBTC = parseFloat(t);
+  const s = loadLS(LS.snapshots); if (Array.isArray(s)) S.snapshots = s;
+}
+
+/* ════════════════════════════════════════════════════════
+   SYNC STATUS — UI 인디케이터 제거됨 (백그라운드 동기화 그대로 작동)
+   ════════════════════════════════════════════════════════ */
+function setSyncStatus(status, text) {
+  S.syncStatus = status;
+  // 헤더의 sync dot UI를 제거했으므로 noop. 동기화 로직 자체는 정상 작동.
+}
+
+/* ════════════════════════════════════════════════════════
+   GOOGLE SHEETS SYNC
+   ════════════════════════════════════════════════════════ */
+async function pullFromSheets() {
+  if (!SHEETS_OK) return false;
+  setSyncStatus('pending');
+  try {
+    const r = await fetch(SHEETS_URL, { method: 'GET', redirect: 'follow', cache: 'no-cache' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+
+    const sheetsHasData = d.btcHoldings > 0 || (d.snapshots && d.snapshots.length > 0);
+    const localHasData  = S.btcHoldings > 0 || S.snapshots.length > 0;
+
+    if (!sheetsHasData && localHasData) {
+      // 시트가 비어 있는데 로컬에 데이터 있음 → 로컬을 푸시
+      return await pushToSheets();
+    }
+
+    // Sheets → Local
+    if (d.btcHoldings !== undefined) S.btcHoldings = Number(d.btcHoldings);
+    if (d.targetBTC) S.targetBTC = Number(d.targetBTC);
+    if (Array.isArray(d.snapshots)) S.snapshots = d.snapshots;
+
+    saveLS(LS.holdings, S.btcHoldings);
+    saveLS(LS.target,   S.targetBTC);
+    saveLS(LS.snapshots, S.snapshots);
+
+    setSyncStatus('synced');
+    return true;
+  } catch (err) {
+    console.error('Pull failed:', err);
+    setSyncStatus('error', 'PULL FAILED');
+    return false;
+  }
+}
+
+async function pushToSheets() {
+  if (!SHEETS_OK) return false;
+  setSyncStatus('pending');
+  try {
+    const payload = {
+      action: 'save',
+      data: { btcHoldings: S.btcHoldings, targetBTC: S.targetBTC },
+    };
+    const r = await fetch(SHEETS_URL, {
+      method: 'POST', redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error || 'save failed');
+
+    setSyncStatus('synced');
+    return true;
+  } catch (err) {
+    console.error('Push failed:', err);
+    setSyncStatus('error', 'PUSH FAILED');
+    return false;
+  }
+}
+
+async function pushSnapshot(snapData) {
+  if (!SHEETS_OK) return null;
+  setSyncStatus('pending');
+  try {
+    const r = await fetch(SHEETS_URL, {
+      method: 'POST', redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'snapshot', data: snapData }),
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error || 'snapshot failed');
+
+    setSyncStatus('synced');
+    return d.snapshot;
+  } catch (err) {
+    console.error('Snapshot push failed:', err);
+    setSyncStatus('error', 'SNAP FAILED');
+    return null;
+  }
+}
+
+async function pushDeleteSnapshot(id) {
+  if (!SHEETS_OK) return false;
+  try {
+    await fetch(SHEETS_URL, {
+      method: 'POST', redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'delete_snapshot', id }),
+    });
+    return true;
+  } catch (err) {
+    console.error('Delete failed:', err);
+    return false;
+  }
+}
+
+function schedulePush() {
+  if (!SHEETS_OK) return;
+  clearTimeout(pushTimer);
+  setSyncStatus('pending');
+  pushTimer = setTimeout(() => { pushToSheets(); }, 1200);
+}
+
+/* ════════════════════════════════════════════════════════
+   PRICE FETCH
+   ════════════════════════════════════════════════════════ */
+async function fetchPrice() {
+  try {
+    const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=krw&include_24hr_change=true', { cache: 'no-cache' });
+    const d = await r.json();
+    S.price = d.bitcoin.krw;
+    S.priceChange24h = d.bitcoin.krw_24h_change;
+    const priceEl = document.getElementById('priceVal');
+    priceEl.textContent = '₩' + S.price.toLocaleString('ko-KR');
+    priceEl.classList.remove('btc-loading');
+    const deltaEl = document.getElementById('priceDelta');
+    if (S.priceChange24h !== undefined) {
+      const sign = S.priceChange24h >= 0 ? '+' : '';
+      deltaEl.textContent = sign + S.priceChange24h.toFixed(2) + '%';
+      deltaEl.className = 'price-chip-delta ' + (S.priceChange24h >= 0 ? 'pos' : 'neg');
+    }
+    const now = new Date();
+    document.getElementById('refreshedAt').textContent = `PRICE UPDATE · ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+    render();
+  } catch (e) {
+    const priceEl = document.getElementById('priceVal');
+    priceEl.textContent = '가격 오류';
+    priceEl.classList.remove('btc-loading');
+  }
+}
+
+/* ════════════════════════════════════════════════════════
+   FORMATTERS
+   ════════════════════════════════════════════════════════ */
+const fmtKRW = n => '₩' + Math.round(n).toLocaleString('ko-KR');
+const fmtBTC = n => Number(n).toFixed(8);
+const fmtBTC5 = n => Number(n).toFixed(5);
+
+/* ════════════════════════════════════════════════════════
+   RENDER
+   ════════════════════════════════════════════════════════ */
+function render() {
+  const totalBTC = S.btcHoldings;
+  const curVal   = S.price ? totalBTC * S.price : 0;
+  const progress = S.targetBTC > 0 ? Math.min((totalBTC / S.targetBTC) * 100, 100) : 0;
+  const btcLeft  = Math.max(0, S.targetBTC - totalBTC);
+  const remCost  = S.price ? btcLeft * S.price : 0;
+
+  // Hero progress
+  document.getElementById('progressPct').textContent = progress.toFixed(2) + '%';
+  document.getElementById('barFill').style.width = progress + '%';
+  document.getElementById('barCurrent').textContent = `현재 ${fmtBTC5(totalBTC)} BTC`;
+  document.getElementById('barTarget').textContent = `목표 ${S.targetBTC} BTC`;
+  document.getElementById('targetDisplay').textContent = S.targetBTC + ' BTC';
+
+  // Cards
+  document.getElementById('totalBTC').textContent = fmtBTC(totalBTC);
+  const curValEl = document.getElementById('currentValue');
+  if (S.price) {
+    curValEl.textContent = fmtKRW(curVal);
+    curValEl.classList.remove('btc-loading');
+  } else {
+    curValEl.innerHTML = '<span class="btc-loading-text">계산중</span>';
+    curValEl.classList.add('btc-loading');
+  }
+  document.getElementById('currentPriceSub').textContent = S.price ? '기준가 ' + fmtKRW(S.price) : '—';
+  document.getElementById('remainingBTC').textContent = fmtBTC5(btcLeft);
+  document.getElementById('remainingSub').textContent = btcLeft === 0 ? '✓ 목표 달성' : `${S.targetBTC} BTC까지`;
+  document.getElementById('remainingKRW').textContent = S.price ? (btcLeft === 0 ? '✓' : fmtKRW(remCost)) : '—';
+
+  renderChart();
+  renderSnapshots();
+}
+
+/* ════════════════════════════════════════════════════════
+   CHART (BTC 보유량 + 평가액 dual-axis line)
+   ════════════════════════════════════════════════════════ */
+function renderChart() {
+  const canvas = document.getElementById('myChart');
+  const noMsg = document.getElementById('noDataMsg');
+  if (!S.snapshots || S.snapshots.length === 0) {
+    noMsg.style.display = 'flex'; canvas.style.display = 'none';
+    if (chartInst) { chartInst.destroy(); chartInst = null; }
+    return;
+  }
+  noMsg.style.display = 'none'; canvas.style.display = 'block';
+
+  const sorted = [...S.snapshots].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  const labels = sorted.map(s => {
+    const d = new Date(s.timestamp);
+    return `${d.getFullYear().toString().slice(2)}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+  });
+  const btcData = sorted.map(s => Number(s.btcHoldings));
+  const valData = sorted.map(s => Math.round(Number(s.valuationKRW) / 10000));
+
+  if (chartInst) chartInst.destroy();
+  chartInst = new Chart(canvas, {
+    type: 'line',
+    data: { labels, datasets: [
+      {
+        label: 'BTC', data: btcData,
+        borderColor: '#f07a40', backgroundColor: 'rgba(240, 122, 64, 0.08)',
+        tension: 0.3, fill: true, pointRadius: 3, borderWidth: 2.5,
+        yAxisID: 'y',
+      },
+      {
+        label: '평가액', data: valData,
+        borderColor: '#00c98a', backgroundColor: 'rgba(0, 201, 138, 0.05)',
+        tension: 0.3, fill: false, pointRadius: 3, borderWidth: 2,
+        yAxisID: 'y1', borderDash: [4, 4],
+      },
+    ]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1c1b19', borderColor: '#353330', borderWidth: 1,
+          titleColor: '#9a9690', bodyColor: '#f0ede8',
+          titleFont: { family: 'JetBrains Mono', size: 11 },
+          bodyFont:  { family: 'JetBrains Mono', size: 12 },
+          padding: 10,
+          callbacks: {
+            label: ctx => {
+              if (ctx.dataset.label === 'BTC') return ` BTC: ${ctx.parsed.y.toFixed(8)}`;
+              return ` 평가액: ${ctx.parsed.y?.toLocaleString()}만원`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255, 255, 255, 0.03)' },
+          ticks: { color: '#565250', font: { family: 'JetBrains Mono', size: 10 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 6 },
+        },
+        y: {
+          position: 'left',
+          grid: { color: 'rgba(255, 255, 255, 0.03)' },
+          ticks: { color: '#f07a40', font: { family: 'JetBrains Mono', size: 10 }, callback: v => Number(v).toFixed(3) },
+        },
+        y1: {
+          position: 'right',
+          grid: { display: false },
+          ticks: { color: '#00c98a', font: { family: 'JetBrains Mono', size: 10 }, callback: v => v + '만' },
+        },
+      },
+    },
+  });
+}
+
+/* ════════════════════════════════════════════════════════
+   SNAPSHOTS LIST
+   ════════════════════════════════════════════════════════ */
+function renderSnapshots() {
+  const list = document.getElementById('snapList');
+  document.getElementById('snapCount').textContent = S.snapshots.length > 0 ? `총 ${S.snapshots.length}건` : '';
+
+  if (S.snapshots.length === 0) {
+    list.innerHTML = `<div class="empty-state"><span class="ico">📭</span>아직 스냅샷이 없어요<br><span style="opacity:.7">📸 버튼을 눌러 첫 기록을 남겨보세요</span></div>`;
+    return;
+  }
+
+  const sorted = [...S.snapshots].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  let html = '';
+  sorted.forEach(s => {
+    const d = new Date(s.timestamp);
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    const memo = s.memo ? `<div class="snap-item-memo">${escapeHtml(s.memo)}</div>` : '';
+    html += `<div class="snap-item">
+      <div class="snap-item-body">
+        <div class="snap-item-date">${dateStr}</div>
+        <div class="snap-item-stats">
+          <b>${fmtBTC(s.btcHoldings)}</b> BTC<span class="sep">·</span>
+          <b>${fmtKRW(s.valuationKRW)}</b><span class="sep">·</span>
+          기준가 ${fmtKRW(s.btcPrice)}
+        </div>
+        ${memo}
+      </div>
+      <button class="del-btn" onclick="deleteSnapshot(${s.id})">×</button>
+    </div>`;
+  });
+  list.innerHTML = html;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+}
+
+/* ════════════════════════════════════════════════════════
+   MUTATIONS
+   ════════════════════════════════════════════════════════ */
+function openHoldingsModal() {
+  document.getElementById('holdingsInput').value = S.btcHoldings || '';
+  document.getElementById('holdingsModal').classList.add('open');
+  setTimeout(() => document.getElementById('holdingsInput').focus(), 100);
+}
+function closeHoldingsModal() { document.getElementById('holdingsModal').classList.remove('open'); }
+function saveHoldings() {
+  const v = parseFloat(document.getElementById('holdingsInput').value);
+  if (isNaN(v) || v < 0) { showToast('올바른 숫자를 입력하세요', 'neg'); return; }
+  S.btcHoldings = v;
+  saveLS(LS.holdings, v);
+  closeHoldingsModal();
+  render();
+  schedulePush();
+  showToast('보유량 저장됨', 'pos');
+}
+
+function openTargetModal() {
+  document.getElementById('targetInput').value = S.targetBTC;
+  document.getElementById('targetModal').classList.add('open');
+}
+function closeTargetModal() { document.getElementById('targetModal').classList.remove('open'); }
+function saveTarget() {
+  const v = parseFloat(document.getElementById('targetInput').value);
+  if (!v || v <= 0) { showToast('올바른 숫자를 입력하세요', 'neg'); return; }
+  S.targetBTC = v;
+  saveLS(LS.target, v);
+  closeTargetModal();
+  render();
+  schedulePush();
+  showToast('목표 저장됨', 'pos');
+}
+
+/* ════════════════════════════════════════════════════════
+   SNAPSHOTS
+   ════════════════════════════════════════════════════════ */
+function openSnapshotModal() {
+  if (S.btcHoldings === 0) {
+    showToast('먼저 보유량을 입력해주세요', 'neg');
+    return;
+  }
+  if (!S.price) {
+    showToast('가격 로딩 중… 잠시 후 다시', 'neg');
+    return;
+  }
+  const valuation = S.btcHoldings * S.price;
+  document.getElementById('snapHoldingsView').value = fmtBTC(S.btcHoldings) + ' BTC';
+  document.getElementById('snapPriceView').value = fmtKRW(S.price);
+  document.getElementById('snapValuationView').value = fmtKRW(valuation);
+  document.getElementById('snapMemoInput').value = '';
+  document.getElementById('snapshotModal').classList.add('open');
+}
+function closeSnapshotModal() { document.getElementById('snapshotModal').classList.remove('open'); }
+
+async function confirmSnapshot() {
+  const memo = document.getElementById('snapMemoInput').value.trim();
+  const btn = document.getElementById('snapshotBtn');
+  const btnText = document.getElementById('snapBtnText');
+  const original = btnText.textContent;
+
+  closeSnapshotModal();
+  btn.disabled = true;
+  btnText.textContent = '기록 중…';
+
+  const snapData = {
+    btcHoldings: S.btcHoldings,
+    btcPrice: S.price,
+    memo,
+  };
+
+  let saved = null;
+  if (SHEETS_OK) {
+    saved = await pushSnapshot(snapData);
+  }
+  if (!saved) {
+    // 로컬에만 저장
+    saved = {
+      id: Date.now(),
+      timestamp: new Date().toISOString(),
+      btcHoldings: snapData.btcHoldings,
+      btcPrice: snapData.btcPrice,
+      valuationKRW: snapData.btcHoldings * snapData.btcPrice,
+      memo: snapData.memo,
+    };
+  }
+
+  S.snapshots.push(saved);
+  saveLS(LS.snapshots, S.snapshots);
+  render();
+
+  btn.disabled = false;
+  btnText.textContent = original;
+  showToast('✓ 스냅샷 저장됨', 'pos');
+}
+
+async function deleteSnapshot(id) {
+  if (!confirm('이 스냅샷을 삭제할까요?')) return;
+  S.snapshots = S.snapshots.filter(s => s.id !== id);
+  saveLS(LS.snapshots, S.snapshots);
+  render();
+  if (SHEETS_OK) {
+    pushDeleteSnapshot(id);
+  }
+  showToast('삭제됨');
+}
+
+/* ════════════════════════════════════════════════════════
+   TOAST
+   ════════════════════════════════════════════════════════ */
+let toastTimer = null;
+function showToast(message, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = message;
+  t.className = 'toast show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = 'toast ' + type; }, 2000);
+}
+
+/* ════════════════════════════════════════════════════════
+   INIT
+   ════════════════════════════════════════════════════════ */
+initState();
+
+if (SHEETS_OK) {
+  setSyncStatus('pending', 'CONNECTING…');
+  pullFromSheets().then(() => render());
+
+  // 자동 동기화: 60초마다 + 화면 다시 볼 때마다 (남편이 업데이트하면 빠르게 반영)
+  setInterval(() => { pullFromSheets().then(render); }, 60 * 1000);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) pullFromSheets().then(render);
+  });
+} else {
+  setSyncStatus('offline');
+  console.warn('[BTC] SHEETS_URL이 설정되지 않았어요. HTML 상단의 SHEETS_URL 상수를 채워주세요.');
+}
+
+render();
+fetchPrice();
+setInterval(fetchPrice, 60 * 1000);
+</script>
+</body>
+</html>
