@@ -16,7 +16,7 @@
 
   <style>
     /* ─── 다크모드 강제 ─── */
-    :root { color-scheme: dark; accent-color: #b8a8f0; }
+    :root { color-scheme: dark; accent-color: #f07a40; }
     html { color-scheme: dark; background: #0a0a09; }
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
@@ -54,7 +54,7 @@
       caret-color: var(--ink) !important;
       transition: background-color 5000s ease-in-out 0s;
     }
-    ::selection { background: var(--border-mid); color: var(--ink); }
+    ::selection { background: var(--cat-btc-dim); color: var(--ink); }
     ::-webkit-scrollbar { width: 0; height: 0; }
 
     .pos { color: var(--pos); }
@@ -67,7 +67,7 @@
     }
     .btc-loading {
       display: inline-flex; align-items: baseline; gap: 4px;
-      color: var(--purple) !important;
+      color: var(--cat-btc) !important;
     }
     .btc-loading::before {
       content: '₿';
@@ -141,7 +141,7 @@
     }
     .hero-progress::after {
       content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-      background: linear-gradient(90deg, var(--purple), var(--accent), var(--pos));
+      background: linear-gradient(90deg, var(--cat-btc), var(--accent), var(--pos));
     }
     .hero-progress-head {
       display: flex; justify-content: space-between; align-items: flex-end;
@@ -171,7 +171,7 @@
     }
     .bar-fill {
       height: 100%; border-radius: 99px;
-      background: linear-gradient(90deg, var(--purple), #d4c8ff);
+      background: linear-gradient(90deg, var(--cat-btc), #ffb070);
       transition: width 0.6s cubic-bezier(.4, 0, .2, 1);
     }
     .bar-labels {
@@ -218,7 +218,7 @@
       margin-top: 6px; font-weight: 500;
     }
     .edit-hint {
-      font-family: var(--font-sans); font-size: 10px; color: var(--purple);
+      font-family: var(--font-sans); font-size: 10px; color: var(--cat-btc);
       opacity: 0.7; margin-top: 5px; font-weight: 500;
     }
 
@@ -289,7 +289,7 @@
       font-family: var(--font-mono); font-size: 12px; color: var(--ink-mid);
       line-height: 1.6; font-weight: 500;
     }
-    .snap-item-stats b { color: var(--ink); font-weight: 700; }
+    .snap-item-stats b { color: var(--accent); font-weight: 700; }
     .snap-item-stats .sep { color: var(--ink-dim); margin: 0 6px; }
     .snap-item-memo {
       font-family: var(--font-sans); font-size: 11px; color: var(--ink-mid);
@@ -353,7 +353,7 @@
       font-family: var(--font-sans); font-size: 13px;
       resize: vertical; min-height: 60px; line-height: 1.5;
     }
-    .field input:focus, .field textarea:focus { border-color: var(--accent); }
+    .field input:focus, .field textarea:focus { border-color: var(--cat-btc); }
     .field-hint {
       font-family: var(--font-sans); font-size: 10px; color: var(--ink-dim);
       margin-top: 6px; line-height: 1.5;
@@ -370,7 +370,7 @@
       -webkit-tap-highlight-color: transparent;
     }
     .btn:active { transform: scale(0.97); }
-    .btn-primary { background: rgba(184, 168, 240, 0.12); border-color: rgba(184, 168, 240, 0.32); color: var(--purple); }
+    .btn-primary { background: var(--cat-btc-dim); border-color: var(--cat-btc-bd); color: var(--cat-btc); }
     .btn-cancel { background: var(--card-hi); border-color: var(--border); color: var(--ink-mid); }
 
     /* ─── DATA MENU ─── */
@@ -488,7 +488,7 @@
   <div class="chart-header">
     <div class="chart-title">보유량 & 평가액</div>
     <div class="legend">
-      <div class="legend-item"><span class="dot" style="background: var(--purple)"></span>BTC</div>
+      <div class="legend-item"><span class="dot" style="background: var(--cat-btc)"></span>BTC</div>
       <div class="legend-item"><span class="dot" style="background: var(--info)"></span>평가액</div>
     </div>
   </div>
@@ -846,7 +846,7 @@ function renderChart() {
     data: { labels, datasets: [
       {
         label: 'BTC', data: btcData,
-        borderColor: '#b8a8f0', backgroundColor: 'rgba(184, 168, 240, 0.08)',
+        borderColor: '#f07a40', backgroundColor: 'rgba(240, 122, 64, 0.08)',
         tension: 0.3, fill: true, pointRadius: 3, borderWidth: 2.5,
         yAxisID: 'y',
       },
@@ -884,7 +884,7 @@ function renderChart() {
         y: {
           position: 'left',
           grid: { color: 'rgba(255, 255, 255, 0.03)' },
-          ticks: { color: '#b8a8f0', font: { family: 'JetBrains Mono', size: 10 }, callback: v => Number(v).toFixed(3) },
+          ticks: { color: '#f07a40', font: { family: 'JetBrains Mono', size: 10 }, callback: v => Number(v).toFixed(3) },
         },
         y1: {
           position: 'right',
